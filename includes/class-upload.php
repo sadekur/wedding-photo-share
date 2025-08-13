@@ -23,28 +23,50 @@ class Wedding_Live_Upload {
         if ( ! wp_verify_nonce($req->get_header('x-wp-nonce'), 'wp_rest') ) {
             return new WP_Error('forbidden', 'Invalid nonce', ['status' => 403]);
         }
-        $files = $_FILES['files'];
+
+        // Load WP media functions
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+
+        if ( empty($_FILES['upload_file']) || !is_array($_FILES['upload_file']['name']) ) {
+            return ['success' => false, 'message' => 'No files found'];
+        }
+
+        $files = $_FILES['upload_file'];
         $ids = [];
+
         foreach ($files['name'] as $i => $name) {
-            $file = [
-                'name' => $name,
-                'type' => $files['type'][$i],
+            if ($files['error'][$i] !== UPLOAD_ERR_OK) {
+                continue; // skip failed uploads
+            }
+
+            // Build a single file array for WP
+            $single_file = [
+                'name'     => $files['name'][$i],
+                'type'     => $files['type'][$i],
                 'tmp_name' => $files['tmp_name'][$i],
-                'error' => $files['error'][$i],
-                'size' => $files['size'][$i]
+                'error'    => $files['error'][$i],
+                'size'     => $files['size'][$i]
             ];
-            $_FILES = ['upload_file' => $file];
+
+            // Temporarily replace $_FILES with this single file
+            $_FILES = ['upload_file' => $single_file];
+
             $id = media_handle_upload('upload_file', 0);
             if (!is_wp_error($id)) {
                 wp_insert_post([
-                    'post_type' => 'wedding_photo',
+                    'post_type'   => 'wedding_photo',
                     'post_status' => 'publish',
-                    'post_title' => $name,
-                    'meta_input' => ['attachment_id' => $id]
+                    'post_title'  => sanitize_file_name($name),
+                    'meta_input'  => ['attachment_id' => $id]
                 ]);
                 $ids[] = $id;
             }
         }
+
         return ['success' => true, 'ids' => $ids];
     }
+
+
 }

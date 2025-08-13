@@ -5,7 +5,7 @@ jQuery(document).ready(function($){
 
         let formData = new FormData();
         $.each(files, function(i, file){
-            formData.append('files[]', file);
+            formData.append('upload_file[]', file); // must match PHP key
         });
 
         $.ajax({
@@ -16,7 +16,16 @@ jQuery(document).ready(function($){
             processData: false,
             contentType: false,
             success: function(res){
-                $('#wedding_upload_status').html('Uploaded successfully!');
+                console.log(res);
+                if (res.success && res.ids.length > 0) {
+                    $('#wedding_upload_status').html('Uploaded successfully!');
+                } else {
+                    $('#wedding_upload_status').html('Upload failed or no files saved.');
+                }
+            },
+            error: function(err){
+                console.error(err);
+                $('#wedding_upload_status').html('Upload error.');
             }
         });
     });

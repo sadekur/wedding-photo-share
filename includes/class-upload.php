@@ -20,28 +20,22 @@ class Wedding_Live_Upload {
     }
 
     public static function handle_upload(WP_REST_Request $req) {
-        if ( ! wp_verify_nonce($req->get_header('x-wp-nonce'), 'wp_rest') ) {
-            return new WP_Error('forbidden', 'Invalid nonce', ['status' => 403]);
-        }
-
-        // Load WP media functions
-        require_once ABSPATH . 'wp-admin/includes/file.php';
-        require_once ABSPATH . 'wp-admin/includes/image.php';
-        require_once ABSPATH . 'wp-admin/includes/media.php';
-
         if ( empty($_FILES['upload_file']) || !is_array($_FILES['upload_file']['name']) ) {
             return ['success' => false, 'message' => 'No files found'];
         }
+
+        // Load necessary functions
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
 
         $files = $_FILES['upload_file'];
         $ids = [];
 
         foreach ($files['name'] as $i => $name) {
-            if ($files['error'][$i] !== UPLOAD_ERR_OK) {
-                continue; // skip failed uploads
-            }
+            if ($files['error'][$i] !== UPLOAD_ERR_OK) continue;
 
-            // Build a single file array for WP
+            // Build a single file array
             $single_file = [
                 'name'     => $files['name'][$i],
                 'type'     => $files['type'][$i],
@@ -50,23 +44,30 @@ class Wedding_Live_Upload {
                 'size'     => $files['size'][$i]
             ];
 
-            // Temporarily replace $_FILES with this single file
-            $_FILES = ['upload_file' => $single_file];
+            // Handle the upload
+            $upload = wp_handle_upload($single_file, ['test_form' => false]);
 
-            $id = media_handle_upload('upload_file', 0);
-            if (!is_wp_error($id)) {
-                wp_insert_post([
-                    'post_type'   => 'wedding_photo',
-                    'post_status' => 'publish',
-                    'post_title'  => sanitize_file_name($name),
-                    'meta_input'  => ['attachment_id' => $id]
-                ]);
-                $ids[] = $id;
-            }
+            if (!isset($upload['file'])) continue;
+
+            $filetype = wp_check_filetype($upload['file']);
+            $attachment = [
+                'post_mime_type' => $filetype['type'],
+                'post_title'     => sanitize_file_name($name),
+                'post_content'   => '',
+                'post_status'    => 'inherit'
+            ];
+
+            $attach_id = wp_insert_attachment($attachment, $upload['file']);
+
+            // Generate metadata
+            $attach_data = wp_generate_attachment_metadata($attach_id, $upload['file']);
+            wp_update_attachment_metadata($attach_id, $attach_data);
+
+            $ids[] = $attach_id;
         }
 
         return ['success' => true, 'ids' => $ids];
     }
-
-
 }
+
+

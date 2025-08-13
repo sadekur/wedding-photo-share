@@ -5,13 +5,12 @@ jQuery(document).ready(function($){
 
         let formData = new FormData();
         $.each(files, function(i, file){
-            formData.append('upload_file[]', file); // must match PHP key
+            formData.append('upload_file[]', file);
         });
 
         $.ajax({
             url: weddingObj.restUrl + 'upload',
             method: 'POST',
-            headers: { 'X-WP-Nonce': weddingObj.nonce },
             data: formData,
             processData: false,
             contentType: false,

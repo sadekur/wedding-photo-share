@@ -9,22 +9,31 @@ class Wedding_Live_Download {
     }
 
     public static function handle_download(WP_REST_Request $req) {
-        $ids = $req->get_param('ids');
-        if(empty($ids) || !is_array($ids)) {
-            return new WP_Error('no_images', 'No images selected', ['status' => 400]);
+         $ids = $req->get_param('ids');
+        if (empty($ids) || !is_array($ids)) {
+            return new WP_Error('no_ids', 'No images selected', ['status' => 400]);
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . "wedding_photos";
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $query = $wpdb->prepare("SELECT * FROM $table WHERE id IN ($placeholders)", $ids);
+        $rows = $wpdb->get_results($query);
+
+        if (!$rows) {
+            return new WP_Error('not_found', 'No photos found', ['status' => 404]);
         }
 
         $zip = new ZipArchive();
-        $tmp_file = tempnam(sys_get_temp_dir(), 'zip');
-        if($zip->open($tmp_file, ZipArchive::CREATE) !== TRUE) {
-            return new WP_Error('zip_error', 'Cannot create ZIP', ['status' => 500]);
+        $tmp_file = tempnam(sys_get_temp_dir(), 'wedding_zip_') . ".zip";
+
+        if ($zip->open($tmp_file, ZipArchive::CREATE) !== TRUE) {
+            return new WP_Error('zip_error', 'Could not create ZIP file', ['status' => 500]);
         }
 
-        foreach($ids as $post_id) {
-            $att_id = get_post_meta($post_id, 'attachment_id', true);
-            $file_path = get_attached_file($att_id);
-            if(file_exists($file_path)) {
-                $zip->addFile($file_path, basename($file_path));
+        foreach ($rows as $row) {
+            if (file_exists($row->file_path)) {
+                $zip->addFile($row->file_path, basename($row->file_path));
             }
         }
         $zip->close();

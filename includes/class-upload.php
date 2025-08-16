@@ -40,18 +40,16 @@ class Wedding_Live_Upload {
             return ['success' => false, 'message' => 'No files found'];
         }
 
-        // Load necessary functions
         require_once ABSPATH . 'wp-admin/includes/file.php';
-        require_once ABSPATH . 'wp-admin/includes/image.php';
-        require_once ABSPATH . 'wp-admin/includes/media.php';
 
         $files = $_FILES['upload_file'];
-        $ids = [];
+        $ids   = [];
+        global $wpdb;
+        $table = $wpdb->prefix . "wedding_photos";
 
         foreach ($files['name'] as $i => $name) {
             if ($files['error'][$i] !== UPLOAD_ERR_OK) continue;
 
-            // Build a single file array
             $single_file = [
                 'name'     => $files['name'][$i],
                 'type'     => $files['type'][$i],
@@ -60,26 +58,19 @@ class Wedding_Live_Upload {
                 'size'     => $files['size'][$i]
             ];
 
-            // Handle the upload
             $upload = wp_handle_upload($single_file, ['test_form' => false]);
-
             if (!isset($upload['file'])) continue;
 
-            $filetype = wp_check_filetype($upload['file']);
-            $attachment = [
-                'post_mime_type' => $filetype['type'],
-                'post_title'     => sanitize_file_name($name),
-                'post_content'   => '',
-                'post_status'    => 'inherit'
-            ];
+            $file_url  = $upload['url'];
+            $file_path = $upload['file'];
 
-            $attach_id = wp_insert_attachment($attachment, $upload['file']);
+            $wpdb->insert($table, [
+                'file_url'  => $file_url,
+                'file_path' => $file_path,
+                'title'     => sanitize_file_name($name)
+            ]);
 
-            // Generate metadata
-            $attach_data = wp_generate_attachment_metadata($attach_id, $upload['file']);
-            wp_update_attachment_metadata($attach_id, $attach_data);
-
-            $ids[] = $attach_id;
+            $ids[] = $wpdb->insert_id;
         }
 
         return ['success' => true, 'ids' => $ids];

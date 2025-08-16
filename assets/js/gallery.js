@@ -17,7 +17,7 @@ jQuery(document).ready(function($){
     }
 
     // Lightbox click
-    $(document).on('click', '.wedding-lightbox', function(){
+   $(document).on('click', '.wedding-lightbox', function(){
         let imgSrc = $(this).data('full');
         $('body').append(`
             <div id="wedding_lightbox_overlay">
@@ -25,8 +25,6 @@ jQuery(document).ready(function($){
             </div>
         `);
     });
-
-    // Close lightbox
     $(document).on('click', '#wedding_lightbox_overlay', function(){
         $(this).remove();
     });
@@ -41,7 +39,7 @@ jQuery(document).ready(function($){
             alert('Select at least one image');
             return;
         }
-        // Open ZIP download
+
         let form = $('<form>', {
             action: weddingObj.restUrl + 'download',
             method: 'POST'
@@ -53,9 +51,7 @@ jQuery(document).ready(function($){
         form.submit();
     });
 
-    // Initial load
+    // Initial load + Auto-refresh
     loadGallery();
-
-    // Auto-refresh
-    setInterval(loadGallery, refreshInterval);
+    // setInterval(loadGallery, refreshInterval);
 });

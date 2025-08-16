@@ -18,20 +18,16 @@ class Wedding_Live_Gallery {
     }
 
     public static function get_photos(WP_REST_Request $req) {
-        $query = new WP_Query([
-            'post_type' => 'wedding_photo',
-            'posts_per_page' => -1,
-            'orderby' => 'date',
-            'order' => 'DESC'
-        ]);
+        global $wpdb;
+        $table = $wpdb->prefix . "wedding_photos";
+        $rows  = $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC");
+
         $photos = [];
-        foreach ($query->posts as $post) {
-            $att_id = get_post_meta($post->ID, 'attachment_id', true);
+        foreach ($rows as $row) {
             $photos[] = [
-                'id' => $post->ID,
-                'url' => wp_get_attachment_image_url($att_id, 'medium'),
-                'full' => wp_get_attachment_image_url($att_id, 'full'),
-                'title' => get_the_title($post)
+                'id'    => $row->id,
+                'url'   => $row->file_url,
+                'title' => $row->title
             ];
         }
         return $photos;

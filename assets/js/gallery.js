@@ -1,5 +1,5 @@
 jQuery(document).ready(function($){
-    let refreshInterval = 5000; // 5 seconds
+    let refreshInterval = 15000; // 15 seconds
 
     function loadGallery() {
         $.get(weddingObj.restUrl + 'photos', function(data){
@@ -53,5 +53,5 @@ jQuery(document).ready(function($){
 
     // Initial load + Auto-refresh
     loadGallery();
-    // setInterval(loadGallery, refreshInterval);
+    setInterval(loadGallery, refreshInterval);
 });

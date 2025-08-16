@@ -1,5 +1,21 @@
 <?php
 class Wedding_Live_Upload {
+    public static function activate() {
+        global $wpdb;
+        $table = $wpdb->prefix . "wedding_photos";
+        $charset = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE IF NOT EXISTS $table (
+            id BIGINT(20) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            file_url TEXT NOT NULL,
+            file_path TEXT NOT NULL,
+            title VARCHAR(255) DEFAULT '',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) $charset;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta($sql);
+    }
     public static function shortcode() {
         ob_start(); ?>
         <div class="wedding-upload-wrap">

@@ -14,7 +14,7 @@ foreach ( glob( plugin_dir_path(__FILE__) . "includes/*.php" ) as $file ) {
 }
 
 // Hooks
-add_action( 'init', ['Wedding_Live_CPT', 'register'] );
+// add_action( 'init', ['Wedding_Live_CPT', 'register'] );
 add_action( 'admin_menu', ['Wedding_Live_QR', 'admin_menu'] );
 add_action( 'rest_api_init', ['Wedding_Live_Upload', 'register_routes'] );
 add_action( 'rest_api_init', ['Wedding_Live_Gallery', 'register_routes'] );
@@ -23,6 +23,7 @@ add_action( 'rest_api_init', ['Wedding_Live_Download', 'register_routes'] );
 
 add_shortcode( 'wedding_upload', ['Wedding_Live_Upload', 'shortcode'] );
 add_shortcode( 'wedding_gallery', ['Wedding_Live_Gallery', 'shortcode'] );
+add_action( 'init', ['Wedding_Live_Upload', 'activate'] );
 
 add_action( 'wp_enqueue_scripts', function() {
     wp_enqueue_style( 'wedding-style', plugin_dir_url(__FILE__) . 'assets/css/style.css' );
